@@ -38,7 +38,8 @@ def run_camera(camera_engine,
         check, frame = video.read()
 
         # gray the frame
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        gray_frame = cv2.cvtColor(gray_frame, cv2.COLOR_BGRA2GRAY)
 
         # blur the frame
         gray_frame_gau = cv2.GaussianBlur(gray_frame, (21, 21), 0)
@@ -98,7 +99,7 @@ def run_camera(camera_engine,
                     lineType=cv2.LINE_AA)
         cv2.putText(img=frame, text=hour, org=(20, 80),
                     fontFace=cv2.FONT_HERSHEY_PLAIN,
-                    fontScale=2, color=(250, 10, 10), thickness=2,
+                    fontScale=2, color=(10, 10, 250), thickness=2,
                     lineType=cv2.LINE_AA)
 
         # show the capture (optional)
