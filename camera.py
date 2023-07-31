@@ -1,7 +1,11 @@
+import glob
+import os
 import time
-import cv2
-import timeplay
+from threading import Thread
 
+import cv2
+
+import timeplay
 from emailing import send_email
 
 
@@ -9,13 +13,25 @@ def camera_cv2(frame):
     cv2.imshow("Video", frame)
 
 
-def run_camera(camera_engine, initial_delay=1):
+def notify(image_path, email_receiver):
+    send_email(image_path, email_receiver)
+
+    # Clean the frames
+    images = glob.glob("images/*.png")
+    for image in images:
+        os.remove(image)
+
+
+def run_camera(camera_engine,
+               receiver="lvictor1979@gmail.com",
+               initial_delay=1):
     video = cv2.VideoCapture(0)
 
     time.sleep(initial_delay)
 
     first_frame = None
     status_list = [0]
+    count = 1
     while True:
         status = 0
         # read the frame
@@ -52,8 +68,11 @@ def run_camera(camera_engine, initial_delay=1):
                 x, y, w, h = cv2.boundingRect(contour)
                 rectangle = cv2.rectangle(frame, (x, y), (x + w, y + h),
                                           (0, 255, 0), 3)
+                # shape delimited
                 if rectangle.any():
-                    status = 1
+                    status = 1  # update the status
+                    cv2.imwrite(f"images/{count}.png", frame)  # save the frame
+                    count = count + 1
 
         # update the statues
         status_list.append(status)
@@ -61,7 +80,15 @@ def run_camera(camera_engine, initial_delay=1):
         # detect exit and send email
         last_two = status_list[-2:]
         if last_two[0] == 1 and last_two[1] == 0:
-            send_email()
+            # select the screen capture to send
+            all_images = glob.glob("images/*.png")
+            index = int(len(all_images) / 2)
+            image_with_object = all_images[index]
+            # send email
+            email_thread = Thread(target=notify,
+                                  args=(image_with_object, receiver))
+            email_thread.daemon = True  # allow execution in background
+            email_thread.start()
 
         # show timestamp
         day, hour = timeplay.get_day_and_time()
